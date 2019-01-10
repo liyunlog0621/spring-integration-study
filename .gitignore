@@ -1,0 +1,11 @@
+/.idea/
+/.mvn/
+/src/
+/mvnw.cmd
+/mvnw
+/spring-integration-study.iml
+/*/.mvn/
+/*/target/
+/*/mvnw.cmd
+/*/mvnw
+/*/src/test/
