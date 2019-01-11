@@ -12,11 +12,8 @@ public class Person {
 
     private int personId;
     private String name;
-    private Gender gender;
-    private Date dateOfBirth;
-
-    public Person() {
-    }
+    private String password;
+    private String dateOfBirth;
 
     public int getPersonId() {
         return personId;
@@ -34,19 +31,29 @@ public class Person {
         this.name = name;
     }
 
-    public Gender getGender() {
-        return gender;
+    public String getPassword() {
+        return password;
     }
 
-    public void setGender(Gender gender) {
-        this.gender = gender;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
-    public Date getDateOfBirth() {
+    public String getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(Date dateOfBirth) {
+    public void setDateOfBirth(String dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "personId=" + personId +
+                ", name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                ", dateOfBirth=" + dateOfBirth +
+                '}';
     }
 }

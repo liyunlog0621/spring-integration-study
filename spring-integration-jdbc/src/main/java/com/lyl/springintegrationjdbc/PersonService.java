@@ -2,6 +2,8 @@ package com.lyl.springintegrationjdbc;
 
 import com.lyl.springintegrationjdbc.model.Person;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -10,8 +12,9 @@ import java.util.List;
  * Author liyunlong
  * Data 上午 10:45
  * Version 1.0
- **/
-@ComponentScan
+ */
+
+@Component
 public interface PersonService {
 
     Person createPerson(Person person);

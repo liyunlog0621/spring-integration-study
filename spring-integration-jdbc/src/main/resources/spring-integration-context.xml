@@ -8,10 +8,14 @@
 		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
 		http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-    <!--https://docs.spring.io/spring-integration/docs/5.1.1.RELEASE/reference/html/jdbc.html#_initializing_the_database-->
-    <jdbc:embedded-database id="dataSource" type="H2">
-        <jdbc:script location="setup-tables.sql"/>
+
+    <jdbc:embedded-database id="datasource" type="H2">
+        <jdbc:script location="classpath:setup-tables.sql"/>
     </jdbc:embedded-database>
+
+    <!-- See also:
+        http://static.springsource.org/spring-integration/reference/htmlsingle/#gateway-proxy
+        http://www.eaipatterns.com/MessagingGateway.html -->
 
     <int:channel id="createPersonRequestChannel"/>
     <int:channel id="createPersonReplyChannel"/>
@@ -20,48 +24,47 @@
 
     <int:gateway id="personService" service-interface="com.lyl.springintegrationjdbc.PersonService">
         <int:method name="createPerson"
-                    request-channel="createPersonReplyChannel"
-                    reply-timeout="5000"
+                    request-channel="createPersonRequestChannel"
+                    request-timeout="5000"
                     reply-channel="createPersonReplyChannel"
-                    request-timeout="0"/>
+                    reply-timeout="0"/>
         <int:method name="findPersonByName"
-                    reply-channel="findPersonRequestChannel"
-                    reply-timeout="5000"
-                    request-channel="findPersonReplyChannel"
-                    request-timeout="0"/>
+                    request-channel="findPersonRequestChannel"
+                    request-timeout="5000"
+                    reply-channel="findPersonReplyChannel"
+                    reply-timeout="0"/>
     </int:gateway>
 
-    <!--出网网关：处理消息并使用它执行sql查询，然后通过将发送到回复通道来相应结果-->
-    <!-- 一般情况下 select查询组件只返回一行 ，可以通过调整max-rows来调整, max-rows="0" 就是返回所有行-->
-    <int-jdbc:outbound-gateway data-source="dataSource"
-                               requires-reply="false"
-                               request-channel="findPersonRequestChannel"
-                               update="insert into Person (name,gender,dateOfBirth)
-										values
-										(:name,:gender,:dateOfBirth)"
-                               query="select * from Person where lower(name)=lower(:payload)"
-                               reply-channel="findPersonReplyChannel" row-mapper="personResultMapper"
-                               max-rows="100">
+
+    <!--查询列表-->
+    <int-jdbc:outbound-gateway
+            data-source="datasource"
+            requires-reply="false"
+            request-channel="findPersonRequestChannel"
+            query="select * from Person where lower(name)=lower(:payload)"
+            reply-channel="findPersonReplyChannel"
+            row-mapper="personResultMapper"
+            max-rows="100"
+            max-rows-per-poll="5000">
     </int-jdbc:outbound-gateway>
 
     <bean id="personResultMapper" class="com.lyl.springintegrationjdbc.model.PersonMapper"/>
-
-    <int-jdbc:outbound-gateway
-            request-channel="createPersonRequestChannel"
-            reply-channel="createPersonReplyChannel"
-            update="insert into Person (name,gender,dateOfBirth)
-										values
-										(:name,:gender,:dateOfBirth)"
-            query="select * from Person where id = :id"
-            request-sql-parameter-source-factory="requestSource"
-            reply-sql-parameter-source-factory="replySource"
-            row-mapper="personResultMapper"
-            keys-generated="true" data-source="dataSource"/>
+    <!--添加  requires-reply="false" 是忽略返回值 -->
+    <int-jdbc:outbound-gateway data-source="datasource"
+                               request-channel="createPersonRequestChannel"
+                               reply-channel="createPersonReplyChannel"
+                               update="insert into Person (name,password,dateOfBirth)values(:name,:password,:dateOfBirth)"
+                               query="select * from Person where PERSONID = :PERSONID"
+                               request-sql-parameter-source-factory="requestSource"
+                               reply-sql-parameter-source-factory="replySource"
+                               row-mapper="personResultMapper"
+                               keys-generated="true"
+                               requires-reply="false"/>
 
     <bean id="replySource" class="org.springframework.integration.jdbc.ExpressionEvaluatingSqlParameterSourceFactory">
         <property name="parameterExpressions">
             <map>
-                <entry key="id" value="#this['SCOPE_IDENTITY()']"/>
+                <entry key="PERSONID" value="#this['SCOPE_IDENTITY()']"/>
             </map>
         </property>
     </bean>
@@ -70,9 +73,10 @@
         <property name="parameterExpressions">
             <map>
                 <entry key="name" value="payload.name.toUpperCase()"/>
-                <entry key="gender" value="payload.gender.identifier"/>
+                <entry key="password" value="payload.password"/>
                 <entry key="dateOfBirth" value="payload.dateOfBirth"/>
             </map>
         </property>
     </bean>
+
 </beans>
