@@ -12,7 +12,9 @@
     <channel id="outputChannel">
         <queue capacity="10"/>
     </channel>
+    <!--是脾气 只是所有发送到inputchannel的方法的消息 ，都应该转发到out-channel的helloServiceImpl的sayHello方法中
 
+     -->
     <service-activator input-channel="inputChannel"
                        output-channel="outputChannel"
                        ref="helloService"
